@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenDot Internal Tools — Visibility POC</title>
+    <style>
+        :root {
+            --bg: #0d1117; --surface: #161b22; --border: #30363d;
+            --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+            --green: #3fb950; --red: #f85149; --yellow: #d29922;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.8rem; }
+        .subtitle { color: var(--muted); margin-bottom: 2rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+        .card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pass { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.4); }
+        .badge-fail { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.4); }
+        .badge-pending { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.4); }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-cell { text-align: center; }
+        #results { margin-top: 1rem; }
+        .test-row td:first-child { font-weight: 500; }
+        .info-box { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.3); border-radius: 6px; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; }
+        .info-box code { background: var(--bg); padding: 2px 6px; border-radius: 3px; font-size: 0.85rem; }
+        .timestamp { color: var(--muted); font-size: 0.8rem; margin-top: 1rem; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .fingerprint { font-family: monospace; font-size: 0.85rem; color: var(--muted); word-break: break-all; }
+        #probe-log { font-family: monospace; font-size: 0.8rem; line-height: 1.6; color: var(--muted); max-height: 300px; overflow-y: auto; padding: 1rem; background: var(--bg); border-radius: 4px; margin-top: 0.5rem; }
+        .log-pass { color: var(--green); }
+        .log-fail { color: var(--red); }
+        .log-warn { color: var(--yellow); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 GitHub Pages Visibility POC</h1>
+        <p class="subtitle">Testing access control scenarios for internal dev tools hosting</p>
+
+        <!-- Visitor Fingerprint -->
+        <div class="card">
+            <h2>👤 Your Access Fingerprint</h2>
+            <p class="info-box">
+                This page automatically detects your access context to verify visibility scenarios.
+            </p>
+            <table>
+                <tr><td style="width:200px; color:var(--muted)">Page loaded at</td><td id="fp-time">—</td></tr>
+                <tr><td style="color:var(--muted)">Your IP (via headers)</td><td id="fp-ip">Not available (static site)</td></tr>
+                <tr><td style="color:var(--muted)">User Agent</td><td id="fp-ua" class="fingerprint">—</td></tr>
+                <tr><td style="color:var(--muted)">Referrer</td><td id="fp-ref" class="fingerprint">—</td></tr>
+                <tr><td style="color:var(--muted)">Page URL</td><td id="fp-url" class="fingerprint">—</td></tr>
+                <tr><td style="color:var(--muted)">GitHub Pages?</td><td id="fp-ghpages">—</td></tr>
+                <tr><td style="color:var(--muted)">Protocol</td><td id="fp-proto">—</td></tr>
+            </table>
+        </div>
+
+        <!-- Automated Probe Tests -->
+        <div class="card">
+            <h2>🧪 Automated Visibility Probes</h2>
+            <p style="color:var(--muted); margin-bottom:0.5rem; font-size:0.9rem;">
+                These tests run automatically when you load the page. They verify what resources are reachable from your current network context.
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Test</th><th>Description</th><th class="status-cell">Result</th><th>Latency</th></tr>
+                </thead>
+                <tbody id="probe-results"></tbody>
+            </table>
+            <div id="probe-log"></div>
+        </div>
+
+        <!-- Manual Test Matrix -->
+        <div class="card">
+            <h2>📋 Visibility Scenario Matrix</h2>
+            <p class="info-box">
+                Test these scenarios manually from different contexts. Share this page URL with testers.<br>
+                Record results in the <code>RESULTS.md</code> file.
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Scenario</th>
+                        <th>Expected</th>
+                        <th class="status-cell">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="test-row">
+                        <td>1</td>
+                        <td><strong>GD employee, logged into GitHub, on VPN</strong><br><span style="color:var(--muted);font-size:0.85rem">Your normal work setup</span></td>
+                        <td><span class="badge badge-pass">✓ VISIBLE</span></td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s1">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>2</td>
+                        <td><strong>GD employee, logged into GitHub, OFF VPN</strong><br><span style="color:var(--muted);font-size:0.85rem">From home without VPN connected</span></td>
+                        <td><span class="badge badge-pass">✓ VISIBLE</span> (if Enterprise)</td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s2">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>3</td>
+                        <td><strong>GD employee, NOT logged into GitHub</strong><br><span style="color:var(--muted);font-size:0.85rem">Incognito browser, no GitHub session</span></td>
+                        <td>
+                            <span class="badge badge-fail">✗ 404</span> (private repo)<br>
+                            <span class="badge badge-pass">✓ VISIBLE</span> (public repo)
+                        </td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s3">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>4</td>
+                        <td><strong>External person (not in GD org)</strong><br><span style="color:var(--muted);font-size:0.85rem">Personal GitHub account, not GD member</span></td>
+                        <td>
+                            <span class="badge badge-fail">✗ 404</span> (private repo)<br>
+                            <span class="badge badge-pass">✓ VISIBLE</span> (public repo)
+                        </td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s4">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>5</td>
+                        <td><strong>No GitHub account at all</strong><br><span style="color:var(--muted);font-size:0.85rem">Random person on the internet</span></td>
+                        <td>
+                            <span class="badge badge-fail">✗ 404</span> (private repo)<br>
+                            <span class="badge badge-pass">✓ VISIBLE</span> (public repo)
+                        </td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s5">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>6</td>
+                        <td><strong>Search engine indexing (Google)</strong><br><span style="color:var(--muted);font-size:0.85rem">Check robots.txt / meta tags</span></td>
+                        <td><span class="badge badge-fail">✗ BLOCKED</span></td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s6">TEST</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>7</td>
+                        <td><strong>API access to Jira (from this browser)</strong><br><span style="color:var(--muted);font-size:0.85rem">Can client-side JS reach Jira API?</span></td>
+                        <td><span class="badge badge-fail">✗ CORS BLOCKED</span></td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s7">AUTO</span></td>
+                    </tr>
+                    <tr class="test-row">
+                        <td>8</td>
+                        <td><strong>Embedded data freshness</strong><br><span style="color:var(--muted);font-size:0.85rem">Is pre-baked data present and recent?</span></td>
+                        <td><span class="badge badge-pass">✓ DATA OK</span></td>
+                        <td class="status-cell"><span class="badge badge-pending" id="s8">AUTO</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Architecture -->
+        <div class="card">
+            <h2>🏗️ Hosting Architecture</h2>
+            <pre style="color:var(--muted); font-size:0.8rem; line-height:1.5; overflow-x:auto;">
+┌─────────────────────────────────────────────────────────────────┐
+│  GitHub Actions (Scheduled Workflow)                             │
+│  ┌──────────┐    ┌──────────────┐    ┌────────────────────┐     │
+│  │ Checkout  │ →  │ Fetch Jira   │ →  │ Build Static HTML  │     │
+│  │ repo      │    │ API (cloud)  │    │ (bake data in)     │     │
+│  └──────────┘    └──────────────┘    └────────┬───────────┘     │
+│                                                │                 │
+│                                     ┌──────────▼───────────┐    │
+│                                     │ Deploy to gh-pages   │    │
+│                                     │ branch               │    │
+│                                     └──────────┬───────────┘    │
+└──────────────────────────────────────────────────┼──────────────┘
+                                                   │
+                              ┌─────────────────────▼──────────────┐
+                              │  GitHub Pages                       │
+                              │  ┌─────────────────────────────┐   │
+                              │  │  Static HTML + CSS + JS      │   │
+                              │  │  (data pre-baked, no API     │   │
+                              │  │   calls at runtime)          │   │
+                              │  └─────────────────────────────┘   │
+                              │                                     │
+                              │  Access Control:                    │
+                              │  • Private repo → org members only │
+                              │  • Public repo → anyone            │
+                              └─────────────────────────────────────┘
+                                                   │
+                    ┌──────────────────────────────┼────────────────────┐
+                    │                              │                    │
+              ┌─────▼─────┐               ┌───────▼────┐        ┌─────▼─────┐
+              │ GD Employee│               │ External   │        │ Search    │
+              │ (GitHub    │               │ User       │        │ Engines   │
+              │  logged in)│               │ (no org    │        │           │
+              │ ✓ VISIBLE  │               │  access)   │        │ ✗ BLOCKED │
+              └────────────┘               │ ✗ 404      │        └───────────┘
+                                           └────────────┘
+            </pre>
+        </div>
+
+        <!-- Embedded test data -->
+        <div class="card">
+            <h2>📦 Embedded Data Sample</h2>
+            <p style="color:var(--muted); font-size:0.9rem;">This simulates pre-baked dashboard data (like your team-dashboard-v2 pattern).</p>
+            <pre id="embedded-data" style="color:var(--green); font-size:0.8rem; max-height:200px; overflow-y:auto;"></pre>
+        </div>
+
+        <p class="timestamp">
+            POC generated: <span id="gen-time">2026-03-18T00:00:00Z</span> |
+            Page version: 1.0.0 |
+            Repo: Green-Dot-Corporation/gh-pages-visibility-poc
+        </p>
+    </div>
+
+    <script>
+        // === Embedded data (simulates baked-in dashboard data) ===
+        const EMBEDDED_DATA = /*__DATA__*/{
+            "generated_at": "2026-03-18T12:00:00Z",
+            "source": "POC-static-sample",
+            "team": "GBOS Platform Engineering",
+            "metrics": {
+                "active_sprints": 2,
+                "open_epics": 8,
+                "team_members": 12,
+                "environments": ["dv","qa","pf","pi","prod"]
+            },
+            "note": "This is sample data baked at build time. In production, GitHub Actions would fetch real Jira data."
+        }/*__DATA_END__*/;
+
+        // === Fingerprint ===
+        document.getElementById('fp-time').textContent = new Date().toISOString();
+        document.getElementById('fp-ua').textContent = navigator.userAgent;
+        document.getElementById('fp-ref').textContent = document.referrer || '(none)';
+        document.getElementById('fp-url').textContent = window.location.href;
+        document.getElementById('fp-proto').textContent = window.location.protocol;
+
+        const isGHPages = window.location.hostname.endsWith('.github.io') ||
+                          window.location.hostname.endsWith('.github.com');
+        document.getElementById('fp-ghpages').innerHTML = isGHPages
+            ? '<span class="badge badge-pass">Yes — GitHub Pages</span>'
+            : '<span class="badge badge-pending">No — ' + window.location.hostname + '</span>';
+
+        // === Embedded data display ===
+        document.getElementById('embedded-data').textContent = JSON.stringify(EMBEDDED_DATA, null, 2);
+        const dataAge = (Date.now() - new Date(EMBEDDED_DATA.generated_at).getTime()) / 3600000;
+        document.getElementById('s8').className = 'badge ' + (dataAge < 24 ? 'badge-pass' : 'badge-fail');
+        document.getElementById('s8').textContent = dataAge < 24
+            ? `✓ FRESH (${dataAge.toFixed(1)}h ago)`
+            : `✗ STALE (${dataAge.toFixed(0)}h ago)`;
+
+        // === Automated probes ===
+        const probeLog = document.getElementById('probe-log');
+        const probeResults = document.getElementById('probe-results');
+
+        function log(msg, cls) {
+            const line = document.createElement('div');
+            line.className = cls || '';
+            line.textContent = `[${new Date().toISOString().slice(11,19)}] ${msg}`;
+            probeLog.appendChild(line);
+        }
+
+        function addProbeRow(name, desc, status, latency) {
+            const tr = document.createElement('tr');
+            const badgeCls = status === 'PASS' ? 'badge-pass' : status === 'FAIL' ? 'badge-fail' : 'badge-pending';
+            tr.innerHTML = `<td>${name}</td><td style="color:var(--muted);font-size:0.85rem">${desc}</td>` +
+                `<td class="status-cell"><span class="badge ${badgeCls}">${status}</span></td>` +
+                `<td style="color:var(--muted);font-size:0.85rem">${latency}</td>`;
+            probeResults.appendChild(tr);
+        }
+
+        async function runProbes() {
+            log('Starting automated visibility probes...', 'log-warn');
+
+            // Probe 1: Can we reach GitHub API (test network connectivity)
+            const t1 = performance.now();
+            try {
+                const r = await fetch('https://api.github.com/zen', { mode: 'cors' });
+                const ms = Math.round(performance.now() - t1);
+                if (r.ok) {
+                    const text = await r.text();
+                    addProbeRow('GitHub API', 'Can reach api.github.com', 'PASS', ms + 'ms');
+                    log(`GitHub API reachable: "${text}" (${ms}ms)`, 'log-pass');
+                } else {
+                    addProbeRow('GitHub API', 'api.github.com returned ' + r.status, 'FAIL', ms + 'ms');
+                    log(`GitHub API returned ${r.status} (${ms}ms)`, 'log-fail');
+                }
+            } catch (e) {
+                const ms = Math.round(performance.now() - t1);
+                addProbeRow('GitHub API', 'Network error: ' + e.message, 'FAIL', ms + 'ms');
+                log(`GitHub API unreachable: ${e.message} (${ms}ms)`, 'log-fail');
+            }
+
+            // Probe 2: Can we reach Jira (CORS expected to block)
+            const t2 = performance.now();
+            try {
+                const r = await fetch('https://greendot.atlassian.net/rest/api/2/serverInfo', {
+                    mode: 'cors',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const ms = Math.round(performance.now() - t2);
+                addProbeRow('Jira API', 'Direct client-side Jira access', 'PASS', ms + 'ms');
+                log(`Jira API reachable (unexpected!) (${ms}ms)`, 'log-warn');
+                document.getElementById('s7').className = 'badge badge-pass';
+                document.getElementById('s7').textContent = '✓ REACHABLE';
+            } catch (e) {
+                const ms = Math.round(performance.now() - t2);
+                addProbeRow('Jira API', 'CORS blocked (expected for static hosting)', 'PASS', ms + 'ms');
+                log(`Jira API blocked by CORS as expected (${ms}ms) — data must be pre-baked`, 'log-pass');
+                document.getElementById('s7').className = 'badge badge-pass';
+                document.getElementById('s7').textContent = '✓ CORS BLOCKED (safe)';
+            }
+
+            // Probe 3: Check if page is served over HTTPS
+            const isHTTPS = window.location.protocol === 'https:';
+            addProbeRow('HTTPS', 'Page served over secure connection', isHTTPS ? 'PASS' : 'WARN', '—');
+            log(`Protocol: ${window.location.protocol} ${isHTTPS ? '(secure)' : '(not HTTPS — expected for local testing)'}`,
+                isHTTPS ? 'log-pass' : 'log-warn');
+
+            // Probe 4: Check for robots.txt
+            const t4 = performance.now();
+            try {
+                const r = await fetch('/robots.txt');
+                const ms = Math.round(performance.now() - t4);
+                if (r.ok) {
+                    const text = await r.text();
+                    const blocked = text.includes('Disallow: /');
+                    addProbeRow('robots.txt', blocked ? 'Search engines blocked' : 'Search engines NOT blocked', blocked ? 'PASS' : 'FAIL', ms + 'ms');
+                    log(`robots.txt found: ${blocked ? 'crawlers blocked' : 'WARNING: crawlers NOT blocked'}`,
+                        blocked ? 'log-pass' : 'log-fail');
+                    document.getElementById('s6').className = 'badge ' + (blocked ? 'badge-pass' : 'badge-fail');
+                    document.getElementById('s6').textContent = blocked ? '✓ BLOCKED' : '✗ NOT BLOCKED';
+                } else {
+                    addProbeRow('robots.txt', 'Not found (404)', 'WARN', ms + 'ms');
+                    log(`robots.txt not found (${r.status})`, 'log-warn');
+                }
+            } catch (e) {
+                addProbeRow('robots.txt', 'Could not check', 'WARN', '—');
+                log(`robots.txt check failed: ${e.message}`, 'log-warn');
+            }
+
+            // Probe 5: Check embedded data integrity
+            const hasData = EMBEDDED_DATA && EMBEDDED_DATA.generated_at;
+            addProbeRow('Embedded Data', hasData ? 'Data present and parseable' : 'No data found', hasData ? 'PASS' : 'FAIL', '—');
+            log(`Embedded data: ${hasData ? 'OK, generated ' + EMBEDDED_DATA.generated_at : 'MISSING'}`,
+                hasData ? 'log-pass' : 'log-fail');
+
+            log('All probes complete.', 'log-warn');
+
+            // Update scenario 1 if we're here, we can see it
+            document.getElementById('s1').className = 'badge badge-pass';
+            document.getElementById('s1').textContent = '✓ YOU CAN SEE THIS';
+        }
+
+        runProbes();
+    </script>
+</body>
+</html>
